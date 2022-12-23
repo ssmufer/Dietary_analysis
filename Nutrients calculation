@@ -1,0 +1,17 @@
+# Calculate nutrients
+`nutr_cal <- (diet_entry$amount * usdasr[match(diet_entry$Food_name, usdasr$food) ,6:154]) /100`
+
+# Add food group, group ID and food ID
+```
+diet_entry$food_group <- usdasr[match(diet_entry$Food_name, usdasr$food), 3]
+diet_entry$group_id <- usdasr[match(diet_entry$Food_name, usdasr$food), 2]
+diet_entry$food_id <- usdasr[match(diet_entry$Food_name, usdasr$food), 1]
+```
+
+
+# Bind food names with calculated nutrients
+```
+nutr_cal <- cbind(diet_entry, nutr_cal)
+nutr_cal[,10:159] <- sapply(nutr_cal[,10:159], as.numeric)
+nutr_cal$ID_Sample <- as.character(nutr_cal$ID_Sample)
+```
