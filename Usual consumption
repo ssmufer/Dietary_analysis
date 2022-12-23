@@ -1,0 +1,20 @@
+library(tidyverse)
+
+# Load data entry
+`diet_entry <- read.csv("Diet_entry.csv", header = T, dec = ".", check.names = F, row.names = NULL)`
+
+
+# Convert diet history intake to usual consumption
+```
+diet_entry$intake_g <- as.numeric(diet_entry$intake_g)
+diet_entry$Freq <- as.numeric(diet_entry$Freq)
+diet_entry$ID_Sample <- as.character(diet_entry$ID_Sample)
+```
+
+# habitual consumption
+```
+diet_entry$amount <- as.numeric(with(diet_entry, ifelse(unit=="d", Freq*intake_g/1,
+                            ifelse(unit=="s", Freq*intake_g/7,
+                                   ifelse(unit=="m", Freq*intake_g/30, 
+                                          ifelse(unit=="a",Freq*intake_g/365,""))))))
+```
