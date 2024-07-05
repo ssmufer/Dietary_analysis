@@ -1,0 +1,6 @@
+Calculation of nutrient intake using  USDA National Nutrient Database, release 28 
+Preprocess database with package usdanutrients
+https://github.com/hadley/usdanutrients.git
+
+# Calculate nutrient intake
+nutr_df <- (diet_df$amount * usdasr[match(diet_df$Food_name, usdasr$food)]) /100
