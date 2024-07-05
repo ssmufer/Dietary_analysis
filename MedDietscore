@@ -1,0 +1,89 @@
+# MedScore Food consumption by sample
+################################################################################
+# variables used the daily consumption in ml 
+MedScr$Energy_kcal <- ifelse(MedScr$MedScore_group=="Alcohol", MedScr$amount, MedScr$Energy_kcal)
+MedScr %>% filter(MedScore_group=="Alcohol")
+
+# collapse food groups by ID
+MedScr <- as.data.frame(MedScr %>% group_by(ID_Sample, MedScore_group) %>% summarise(Kcal=sum(Energy_kcal)))
+
+# exclude foods not assigned to a subgroup
+MedScr <- MedScr[which(MedScr$MedScore_group!="No"),]
+# convert to monthly consumption except for alcohol
+MedScr$Kcal_month <- ifelse(MedScr$MedScore_group=="Alcohol", MedScr$Kcal, MedScr$Kcal*30)
+
+# calculate the number of portions for each group according to the food guideline
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Vegetables", MedScr$Kcal_month/15, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Legumes", MedScr$Kcal_month/55, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Poultry", MedScr$Kcal_month/190, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Red_meat", MedScr$Kcal_month/190, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Fish", MedScr$Kcal_month/190, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", MedScr$Kcal_month/120, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Fruits", MedScr$Kcal_month/170, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Nonrefined_cereals", MedScr$Kcal_month/150, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Potatoes", MedScr$Kcal_month/150, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Oil_olive", MedScr$Kcal_month/73, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Oil_olive", (MedScr$portion/30)*7, MedScr$portion)
+MedScr$portion <- ifelse(MedScr$MedScore_group=="Alcohol", MedScr$Kcal, MedScr$portion)
+
+
+# assining scores
+MedScr$score <- ifelse(MedScr$portion >=0 & MedScr$portion<=0.5, 0, MedScr$score)
+MedScr$score <- ifelse(MedScr$portion>0.5 & MedScr$portion<=4.5, 1, MedScr$score)
+MedScr$score <- ifelse(MedScr$portion>4.5 & MedScr$portion<=8.5, 2, MedScr$score)
+MedScr$score <- ifelse(MedScr$portion>8.5 & MedScr$portion<=12.5, 3, MedScr$score)
+MedScr$score <- ifelse(MedScr$portion>12.5 & MedScr$portion<=18.5, 4, MedScr$score)
+MedScr$score <- ifelse(MedScr$portion>18.5, 5, MedScr$score)
+
+# score for Oil_olive
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion==0, 0, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion>0 & MedScr$portion<=0.5, 1, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion>0.5 & MedScr$portion<=1.5, 2, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion>1.5 & MedScr$portion<=3.5, 3, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion>3.5 & MedScr$portion<7, 4, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Oil_olive", ifelse(MedScr$portion>=7, 5, MedScr$score), MedScr$score)
+
+# score for Alcohol
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion<=0.5 & MedScr$portion>=700, 0, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion>=600 & MedScr$portion<700, 1, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion>=500 & MedScr$portion<600, 2, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion>=400 & MedScr$portion<500, 3, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion>=300 & MedScr$portion<400, 4, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Alcohol", ifelse(MedScr$portion>0.5 & MedScr$portion<300, 5, MedScr$score), MedScr$score)
+
+# reverse score for: Poultry, Red_meat & Full_fat_dairy
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>=0 & MedScr$portion<=0.5, 5, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>0.5 & MedScr$portion<=4.5, 4, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>4.5 & MedScr$portion<=8.5, 3, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>8.5 & MedScr$portion<=12.5, 2, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>12.5 & MedScr$portion<=18.5, 1, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Poultry", ifelse(MedScr$portion>18.5, 0, MedScr$score), MedScr$score)
+
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>=0 & MedScr$portion<=0.5, 5, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>0.5 & MedScr$portion<=4.5, 4, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>4.5 & MedScr$portion<=8.5, 3, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>8.5 & MedScr$portion<=12.5, 2, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>12.5 & MedScr$portion<=18.5, 1, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Red_meat", ifelse(MedScr$portion>18.5, 0, MedScr$score), MedScr$score)
+
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>=0 & MedScr$portion<=0.5, 5, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>0.5 & MedScr$portion<=4.5, 4, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>4.5 & MedScr$portion<=8.5, 3, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>8.5 & MedScr$portion<=12.5, 2, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>12.5 & MedScr$portion<=18.5, 1, MedScr$score), MedScr$score)
+MedScr$score <- ifelse(MedScr$MedScore_group=="Full_fat_dairy", ifelse(MedScr$portion>18.5, 0, MedScr$score), MedScr$score)
+
+
+# total score
+MedScr %>% group_by(ID_Sample) %>% summarise(score=sum(score))
+MedScr <- MedScr[,-c(3:5)]
+MedScr <- spread(MedScr, key = MedScore_group, value = score)
+rownames(MedScr) <- MedScr$ID_Sample
+MedScr[,-1] <- as.data.frame(sapply(MedScr[,-1], function(x)
+  ifelse(is.na(x)==TRUE, 0, x)))
+MedScr$total <- rowSums(MedScr[,-1])
+
+# categorise into tertiles
+MedScr$MDS_tert <- .bincode(MedScr$total, quantile(MedScr$total, seq(0, 1, length.out = 4), type = 3), include.lowest = TRUE)
+MedScr$MDS_tert <- ifelse(MedScr$MDS_tert==1, "Low", ifelse(MedScr$MDS_tert==2, "Medium", ifelse(MedScr$MDS_tert==3, "High", MedScr$MDS_tert)))
+MedScr$MDS_tert <- factor(MedScr$MDS_tert, ordered = T, levels= c("Low", "Medium", "High"))
