@@ -1,0 +1,39 @@
+# Berry index
+BID <- as.data.frame(aggregate(amount ~ ID_Sample, data = diet_df, sum))
+diet_df$total_amount <- BID[max.col(sapply(BID$ID_Sample, grepl, diet_df$ID_Sample)),2]
+diet_df$share <- diet_df$amount/diet_df$total_amount
+diet_df$share2 <- diet_df$share^2
+BID$share2 <- as.data.frame(aggregate(share2 ~ ID_Sample, data = diet_df, sum))[,2]
+BID$BI <- 1-BID$share2
+
+# Healthy factor
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Vegetal" & diet_df$Subgroup_HFDI =="Vegetables_fruits_leaf_juices",0.68 * 0.36, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Vegetal" & diet_df$Subgroup_HFDI =="Wholemeal_products_bean",0.68 * 0.28, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Vegetal" & diet_df$Subgroup_HFDI =="Potatoes_tuber_roots",0.68 * 0.20, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Vegetal" & diet_df$Subgroup_HFDI =="Whitemeal_products",0.68 * 0.12, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Vegetal" & diet_df$Subgroup_HFDI =="Snacks_sweets",0.68 * 0.04, diet_df$hf)
+
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Animal" & diet_df$Subgroup_HFDI =="Fish_low_fat_poultry",0.28 * 0.36, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Animal" & diet_df$Subgroup_HFDI =="Lowfat_dairy",0.28 * 0.28, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Animal" & diet_df$Subgroup_HFDI =="Milk_dairyproducts",0.28 * 0.20, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Animal" & diet_df$Subgroup_HFDI =="Meat_red_fatty_poultry_eggs",0.28 * 0.12, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Animal" & diet_df$Subgroup_HFDI =="Bacon_sausages",0.28 * 0.04, diet_df$hf)
+
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Fats" & diet_df$Subgroup_HFDI =="Oilseed_rape_walnut_oil",0.04 * 0.36, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Fats" & diet_df$Subgroup_HFDI =="Wheatgermoil_soybeanoil",0.04 * 0.28, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Fats" & diet_df$Subgroup_HFDI =="Cornoil_sunfloweroil",0.04 * 0.20, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Fats" & diet_df$Subgroup_HFDI =="Butter_Lard",0.04 * 0.12, diet_df$hf)
+diet_df$hf <- ifelse(diet_df$Group_HFDI=="Fats" & diet_df$Subgroup_HFDI =="Margarines_vegetablefat",0.04 * 0.04, diet_df$hf)
+
+# Healthy value
+diet_df$hv <- diet_df$share * diet_df$hf
+BID$hv <- as.data.frame(aggregate(hv ~ ID_Sample, data = diet_df, sum, na.action = na.omit))[,2]
+summary(BID$hv) # maximum health value that can be achieved is 0.26
+
+# HDI scores
+BID$HFD <- BID$BI*(BID$hv/0.21771) #division of hv by its maximum ensures that hv is bounded between 1 and nearly 0.
+
+# categorise into tertiles
+BID$HFD_tert <- .bincode(BID$HFD, quantile(BID$HFD, seq(0, 1, length.out = 4), type = 3), include.lowest = TRUE)
+BID$HFD_tert <- ifelse(BID$HFD_tert==1, "Low", ifelse(BID$HFD_tert==2, "Medium", ifelse(BID$HFD_tert==3, "High", BID$HFD_tert)))
+BID$HFD_tert <- factor(BID$HFD_tert, ordered = T, levels= c("Low", "Medium", "High"))
